@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="dashboard.js" defer></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>My Personal Space</h1>
+            <div class="header-time">
+                <span id="current-time"></span>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <!-- Left Section -->
+            <section class="dashboard-section left-section">
+                <h2>
+                    My Projects
+                    <button class="settings-btn" onclick="openPanelSettings('left')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </h2>
+                <div class="widget-container">
+                    <div class="widget">
+                        <h3>Current Work</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Side Projects</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Ideas & Notes</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Learning Goals</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Section -->
+            <section class="dashboard-section center-section">
+                <h2>
+                    Today's Focus
+                    <button class="settings-btn" onclick="openPanelSettings('center')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </h2>
+                <div class="widget-container">
+                    <div class="widget large-widget">
+                        <h3>Priority Tasks</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget-row">
+                        <div class="widget small-widget">
+                            <h3>Deadlines</h3>
+                            <div class="widget-content">
+                            </div>
+                        </div>
+                        <div class="widget small-widget">
+                            <h3>Quick Notes</h3>
+                            <div class="widget-content">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Weekly Progress</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Section -->
+            <section class="dashboard-section right-section">
+                <h2>
+                    Life Stuff
+                    <button class="settings-btn" onclick="openPanelSettings('right')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </h2>
+                <div class="widget-container">
+                    <div class="widget">
+                        <h3>Calendar</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Reminders</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Habits Tracker</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                    <div class="widget">
+                        <h3>Random Thoughts</h3>
+                        <div class="widget-content">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

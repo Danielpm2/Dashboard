@@ -1,7 +1,9 @@
 /* Google Calendar Styles */
 .calendar-container {
-    height: calc(100vh - 200px);
+    height: 100%; /* Takes available space in the 50% section */
     overflow-y: auto;
+    max-height: 100%; /* Prevent overflow when zooming */
+    min-height: 250px; /* Minimum height for visibility */
 }
 
 .calendar-loading, .calendar-error {

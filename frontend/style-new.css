@@ -18,6 +18,9 @@
 /* Calendar specific styles */
 @import url('./css/calendar.css');
 
+/* Football specific styles */
+@import url('./css/football.css');
+
 /* Notification system */
 @import url('./css/notifications.css');
 

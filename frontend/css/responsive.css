@@ -73,6 +73,21 @@
         align-self: flex-end;
     }
     
+    /* Mobile left section adjustments */
+    .left-section {
+        height: auto;
+        max-height: none;
+    }
+    
+    .calendar-section {
+        margin-bottom: 12px;
+        min-height: 300px;
+    }
+    
+    .football-section {
+        min-height: 250px;
+    }
+    
     .calendar-container {
         height: calc(100vh - 300px);
     }
@@ -86,6 +101,23 @@
         right: 10px;
         left: 10px;
         min-width: auto;
+    }
+    
+    /* Football mobile optimizations */
+    .football-content {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .standings-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .player-info {
+        flex-direction: column;
+        text-align: center;
     }
 }
 
@@ -169,5 +201,46 @@
     
     .calendar-event {
         padding: 0.5rem;
+    }
+}
+
+/* High zoom levels and viewport constraints */
+@media (max-height: 700px) {
+    .left-section {
+        height: auto;
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+    
+    .calendar-section,
+    .football-section {
+        flex: none;
+        height: auto;
+        min-height: 200px;
+        max-height: 45vh;
+    }
+    
+    .football-container {
+        min-height: 200px;
+    }
+}
+
+/* Very high zoom or very small viewport */
+@media (max-height: 500px) {
+    .left-section {
+        height: auto;
+        max-height: none;
+    }
+    
+    .calendar-section,
+    .football-section {
+        flex: none;
+        min-height: 150px;
+        max-height: none;
+    }
+    
+    .dashboard-main {
+        height: auto;
+        overflow-y: auto;
     }
 }

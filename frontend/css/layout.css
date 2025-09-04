@@ -1,0 +1,76 @@
+/* Dashboard container */
+.dashboard-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header styles */
+.dashboard-header {
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+}
+
+.header-time {
+    font-size: 1.1rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Main dashboard layout */
+.dashboard-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Dashboard sections */
+.dashboard-section {
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #2a2a2a;
+    height: fit-content;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-section h2 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Section color themes */
+.left-section h2 {
+    border-bottom-color: #00d563;
+}
+
+.center-section h2 {
+    border-bottom-color: #ff6b35;
+}
+
+.right-section h2 {
+    border-bottom-color: #4ecdc4;
+}

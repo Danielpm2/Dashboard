@@ -4,23 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-new.css">
     <script src="dashboard.js" defer></script>
 </head>
 <body>
     <div class="dashboard-container">
         <header class="dashboard-header">
-            <h1>My Personal Space</h1>
+            <h1>My Dashboard</h1>
             <div class="header-time">
                 <span id="current-time"></span>
             </div>
         </header>
 
         <main class="dashboard-main">
-            <!-- Left Section -->
+            <!-- Left Section - Google Calendar -->
             <section class="dashboard-section left-section">
-                <h2></h2>
-                <div class="widget-container">
+                <h2>
+                    My Calendar
+                    <button id="calendar-refresh" class="calendar-refresh-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </h2>
+                <div class="calendar-container">
+                    <div id="calendar-loading" class="calendar-loading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Loading calendar events...</p>
+                    </div>
+                    <div id="calendar-events" class="calendar-events">
+                        <!-- Calendar events will be populated here -->
+                    </div>
                 </div>
             </section>
 

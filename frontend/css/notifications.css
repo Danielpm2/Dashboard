@@ -1,0 +1,112 @@
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+.notification-success {
+    background: #00d563;
+    border-left: 4px solid #00b854;
+}
+
+.notification-error {
+    background: #dc3545;
+    border-left: 4px solid #c82333;
+}
+
+.notification-info {
+    background: #17a2b8;
+    border-left: 4px solid #138496;
+}
+
+.notification-warning {
+    background: #ffc107;
+    border-left: 4px solid #e0a800;
+    color: #000;
+}
+
+.notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.notification button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.notification-warning button {
+    color: #000;
+}
+
+.notification-warning button:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Notification Icons */
+.notification::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.notification-success::before {
+    content: '✓';
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-error::before {
+    content: '✕';
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-info::before {
+    content: 'ℹ';
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-warning::before {
+    content: '⚠';
+    color: #000;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

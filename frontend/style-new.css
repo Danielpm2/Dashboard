@@ -1,0 +1,37 @@
+/* 
+ * Dashboard CSS - Modular Organization
+ * Main stylesheet that imports all component styles
+ */
+
+/* Base styles and reset */
+@import url('./css/base.css');
+
+/* Layout and grid system */
+@import url('./css/layout.css');
+
+/* Reusable components */
+@import url('./css/components.css');
+
+/* Modal and overlay styles */
+@import url('./css/modals.css');
+
+/* Calendar specific styles */
+@import url('./css/calendar.css');
+
+/* Notification system */
+@import url('./css/notifications.css');
+
+/* Responsive design */
+@import url('./css/responsive.css');
+
+/* 
+ * File Organization:
+ * 
+ * base.css         - Reset, body, scrollbar, global animations
+ * layout.css       - Dashboard container, header, main grid, sections
+ * components.css   - Buttons, widgets, loading states, error states
+ * modals.css       - Settings modal, close buttons, modal content
+ * calendar.css     - Calendar events, states, date headers
+ * notifications.css - Toast notifications, success/error/info states
+ * responsive.css   - Media queries and responsive behavior
+ */

@@ -5,10 +5,12 @@ const router = express.Router();
 // Import individual route modules
 const panelsRoutes = require('./panels');
 const healthRoutes = require('./health');
+const calendarRoutes = require('./calendar');
 
 // Mount routes
 router.use('/panels', panelsRoutes);
 router.use('/health', healthRoutes);
+router.use('/calendar', calendarRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
@@ -19,7 +21,10 @@ router.get('/', (req, res) => {
             health: '/api/health',
             healthDetailed: '/api/health/detailed',
             panels: '/api/panels',
-            specificPanel: '/api/panels/:panelKey'
+            specificPanel: '/api/panels/:panelKey',
+            calendar: '/api/calendar',
+            calendarEvents: '/api/calendar/events',
+            calendarEventsFormatted: '/api/calendar/events/formatted'
         },
         documentation: {
             panels: {
@@ -30,6 +35,11 @@ router.get('/', (req, res) => {
             health: {
                 'GET /health': 'Basic health check',
                 'GET /health/detailed': 'Detailed health check with database status'
+            },
+            calendar: {
+                'GET /calendar/events': 'Get Google Calendar events (raw)',
+                'GET /calendar/events/formatted': 'Get formatted calendar events for dashboard',
+                'GET /calendar/test': 'Test calendar API connection'
             }
         }
     });

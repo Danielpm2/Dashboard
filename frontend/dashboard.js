@@ -20,6 +20,8 @@ class Dashboard {
         }
         
         this.setupEventListeners();
+        this.setupCalendarRefresh();
+        this.loadGoogleCalendar();
         console.log('Dashboard initialization complete');
     }
 
@@ -342,6 +344,105 @@ class Dashboard {
                 notification.remove();
             }
         }, 5000);
+    }
+
+    // Google Calendar functionality
+    async loadGoogleCalendar() {
+        const calendarContainer = document.getElementById('calendar-events');
+        const loadingDiv = document.getElementById('calendar-loading');
+        const refreshBtn = document.getElementById('calendar-refresh');
+        
+        console.log('loadGoogleCalendar called');
+        console.log('Calendar container:', calendarContainer);
+        console.log('Loading div:', loadingDiv);
+        console.log('Refresh btn:', refreshBtn);
+        
+        if (!calendarContainer) {
+            console.error('Calendar container not found!');
+            return;
+        }
+        
+        try {
+            // Show loading state
+            if (loadingDiv) loadingDiv.style.display = 'block';
+            if (refreshBtn) refreshBtn.disabled = true;
+            
+            console.log('Loading Google Calendar events...');
+            const response = await fetch(`${this.apiUrl}/calendar/events/formatted`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Calendar events loaded:', data);
+            
+            // Hide loading state
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            if (refreshBtn) refreshBtn.disabled = false;
+            
+            if (data.success && data.events && data.events.length > 0) {
+                console.log('Displaying events:', data.events);
+                this.displayCalendarEvents(data.events);
+            } else {
+                console.log('No events found, showing no events message');
+                this.displayNoEvents();
+            }
+            
+        } catch (error) {
+            console.error('Error loading calendar events:', error);
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            if (refreshBtn) refreshBtn.disabled = false;
+            this.displayCalendarError();
+        }
+    }
+    
+    displayCalendarEvents(events) {
+        const calendarContainer = document.getElementById('calendar-events');
+        if (!calendarContainer) return;
+        
+        calendarContainer.innerHTML = events.map(event => `
+            <div class="calendar-event ${event.isToday ? 'today' : ''} ${event.isOngoing ? 'ongoing' : ''}">
+                <div class="calendar-event-time">${event.formattedTime}</div>
+                <div class="calendar-event-title">${event.title}</div>
+                ${event.location ? `<div class="event-location">📍 ${event.location}</div>` : ''}
+                ${event.description ? `<div class="calendar-event-description">${event.description}</div>` : ''}
+            </div>
+        `).join('');
+    }
+    
+    displayNoEvents() {
+        const calendarContainer = document.getElementById('calendar-events');
+        if (!calendarContainer) return;
+        
+        calendarContainer.innerHTML = `
+            <div class="no-events">
+                <div class="no-events-icon">📅</div>
+                <div class="no-events-text">No upcoming events</div>
+            </div>
+        `;
+    }
+    
+    displayCalendarError() {
+        const calendarContainer = document.getElementById('calendar-events');
+        if (!calendarContainer) return;
+        
+        calendarContainer.innerHTML = `
+            <div class="calendar-error">
+                <div class="error-icon">⚠️</div>
+                <div class="error-text">Failed to load calendar events</div>
+                <button onclick="dashboard.loadGoogleCalendar()" class="retry-btn">Retry</button>
+            </div>
+        `;
+    }
+    
+    setupCalendarRefresh() {
+        const refreshBtn = document.getElementById('calendar-refresh');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadGoogleCalendar();
+            });
+        }
     }
 }
 

@@ -7,7 +7,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3067', 'http://127.0.0.1:3067'],
+    credentials: true
+}));
 app.use(express.json());
 
 // Database connection
@@ -116,42 +119,50 @@ app.post('/api/panels', async (req, res) => {
         const { panels } = req.body;
         const db = await mysql.createConnection(dbConfig);
         
-        await db.execute('START TRANSACTION');
+        // Use query instead of execute for transaction commands
+        await db.query('START TRANSACTION');
         
-        // Clear existing data
-        await db.execute('DELETE FROM widgets');
-        await db.execute('DELETE FROM panels');
-        
-        // Insert panels and widgets
-        for (const [panelKey, panelData] of Object.entries(panels)) {
-            // Insert panel
-            await db.execute(
-                'INSERT INTO panels (panel_key, title) VALUES (?, ?)',
-                [panelKey, panelData.title]
-            );
+        try {
+            // Clear existing data
+            await db.execute('DELETE FROM widgets');
+            await db.execute('DELETE FROM panels');
             
-            // Insert widgets
-            for (let i = 0; i < panelData.widgets.length; i++) {
-                const widget = panelData.widgets[i];
+            // Insert panels and widgets
+            for (const [panelKey, panelData] of Object.entries(panels)) {
+                // Insert panel
                 await db.execute(
-                    `INSERT INTO widgets 
-                     (widget_id, panel_key, title, content, color, widget_order, is_large, is_small) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        widget.id,
-                        panelKey,
-                        widget.title,
-                        widget.content || '',
-                        widget.color || '#00d563',
-                        i,
-                        widget.large || false,
-                        widget.small || false
-                    ]
+                    'INSERT INTO panels (panel_key, title) VALUES (?, ?)',
+                    [panelKey, panelData.title]
                 );
+                
+                // Insert widgets
+                for (let i = 0; i < panelData.widgets.length; i++) {
+                    const widget = panelData.widgets[i];
+                    await db.execute(
+                        `INSERT INTO widgets 
+                         (widget_id, panel_key, title, content, color, widget_order, is_large, is_small) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            widget.id,
+                            panelKey,
+                            widget.title,
+                            widget.content || '',
+                            widget.color || '#00d563',
+                            i,
+                            widget.large || false,
+                            widget.small || false
+                        ]
+                    );
+                }
             }
+            
+            await db.query('COMMIT');
+            console.log('Panels saved successfully');
+        } catch (error) {
+            await db.query('ROLLBACK');
+            throw error;
         }
         
-        await db.execute('COMMIT');
         await db.end();
         
         res.json({ success: true, message: 'Panels saved successfully' });

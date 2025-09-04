@@ -276,7 +276,8 @@ class Dashboard {
         });
 
         try {
-            await fetch(`${this.apiUrl}/panels`, {
+            console.log('Saving panels to API:', this.panels);
+            const response = await fetch(`${this.apiUrl}/panels`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -284,17 +285,63 @@ class Dashboard {
                 body: JSON.stringify({ panels: this.panels })
             });
             
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Save successful:', result);
+            
             this.renderPanel(panelKey, this.panels[panelKey]);
             modal.remove();
             
+            // Show success message
+            this.showNotification('Settings saved successfully!', 'success');
+            
         } catch (error) {
             console.error('Failed to save panel settings:', error);
-            alert('Failed to save settings. Please try again.');
+            
+            // Show detailed error message
+            let errorMessage = 'Failed to save settings. ';
+            if (error.message.includes('fetch')) {
+                errorMessage += 'Cannot connect to server. Make sure the backend is running on port 3000.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            this.showNotification(errorMessage, 'error');
         }
     }
 
     setupEventListeners() {
         // Add any additional event listeners here
+    }
+
+    showNotification(message, type = 'info') {
+        // Remove existing notifications
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
     }
 }
 

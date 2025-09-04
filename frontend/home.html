@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Dashboard</title>
     <link rel="stylesheet" href="style-new.css">
+    <link rel="stylesheet" href="css/events.css">
     <script src="dashboard.js" defer></script>
+    <script type="module" src="js/CalendarEventsManager.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -21,13 +24,19 @@
             <section class="dashboard-section left-section">
                 <h2>
                     My Calendar
-                    <button id="calendar-refresh" class="calendar-refresh-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <polyline points="1 20 1 14 7 14"></polyline>
-                            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                    </button>
+                    <div class="calendar-header-actions">
+                        <button id="add-event-btn" class="btn btn-primary add-event-header-btn" title="Add Event">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Event</span>
+                        </button>
+                        <button id="calendar-refresh" class="calendar-refresh-btn" title="Refresh">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </h2>
                 <div class="calendar-container">
                     <div id="calendar-loading" class="calendar-loading" style="display: none;">
@@ -54,6 +63,65 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="event-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Nouvel événement</h2>
+                <button id="close-modal" class="close-modal">&times;</button>
+            </div>
+            
+            <form id="event-form" class="event-form">
+                <div class="form-group">
+                    <label for="event-title">Titre de l'événement *</label>
+                    <input type="text" id="event-title" name="title" required placeholder="Ex: Réunion équipe">
+                </div>
+
+                <div class="form-group">
+                    <label for="event-description">Description</label>
+                    <textarea id="event-description" name="description" placeholder="Détails de l'événement..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="event-location">Lieu</label>
+                    <input type="text" id="event-location" name="location" placeholder="Ex: Salle de conférence">
+                </div>
+
+                <div class="form-group">
+                    <label for="event-date">Date *</label>
+                    <input type="date" id="event-date" name="date" required>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="event-all-day" name="allDay">
+                    <label for="event-all-day">Événement toute la journée</label>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group time-input">
+                        <label for="event-start-time">Heure de début *</label>
+                        <input type="time" id="event-start-time" name="startTime" required>
+                    </div>
+                    <div class="form-group time-input">
+                        <label for="event-end-time">Heure de fin</label>
+                        <input type="time" id="event-end-time" name="endTime">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancel-event" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </body>
 </html>

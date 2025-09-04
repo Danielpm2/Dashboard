@@ -12,6 +12,9 @@ yarn-error.log*
 .env.production.local
 .json
 
+# Google OAuth2 credentials (security)
+backend/config/google-credentials.json
+
 # Database
 *.db
 *.sqlite

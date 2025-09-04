@@ -11,6 +11,9 @@ class Dashboard {
         this.updateTime();
         setInterval(() => this.updateTime(), 1000);
         
+        // Check for authentication callback
+        this.handleAuthCallback();
+        
         // Load panels with error handling
         try {
             await this.loadPanels();
@@ -21,6 +24,7 @@ class Dashboard {
         
         this.setupEventListeners();
         this.setupCalendarRefresh();
+        this.checkAuthStatus();
         this.loadGoogleCalendar();
         console.log('Dashboard initialization complete');
     }
@@ -402,11 +406,21 @@ class Dashboard {
         if (!calendarContainer) return;
         
         calendarContainer.innerHTML = events.map(event => `
-            <div class="calendar-event ${event.isToday ? 'today' : ''} ${event.isOngoing ? 'ongoing' : ''}">
-                <div class="calendar-event-time">${event.formattedTime}</div>
-                <div class="calendar-event-title">${event.title}</div>
+            <div class="event-item ${event.isToday ? 'today' : ''} ${event.isOngoing ? 'ongoing' : ''}" data-event-id="${event.id}">
+                <div class="event-header">
+                    <div class="event-time">${event.formattedTime}</div>
+                    <div class="event-actions">
+                        <button class="btn-icon edit-event-btn" data-event-id="${event.id}" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon delete-event-btn" data-event-id="${event.id}" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="event-title">${event.title}</div>
                 ${event.location ? `<div class="event-location">📍 ${event.location}</div>` : ''}
-                ${event.description ? `<div class="calendar-event-description">${event.description}</div>` : ''}
+                ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
             </div>
         `).join('');
     }
@@ -442,6 +456,86 @@ class Dashboard {
             refreshBtn.addEventListener('click', () => {
                 this.loadGoogleCalendar();
             });
+        }
+    }
+    
+    // Authentication methods
+    handleAuthCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const authStatus = urlParams.get('auth');
+        
+        if (authStatus === 'success') {
+            this.showNotification('Successfully connected to Google Calendar!', 'success');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (authStatus === 'error') {
+            this.showNotification('Failed to connect to Google Calendar. Please try again.', 'error');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+    
+    async checkAuthStatus() {
+        try {
+            const response = await fetch(`${this.apiUrl}/auth/status`);
+            const data = await response.json();
+            
+            console.log('Auth status:', data);
+            this.updateAuthUI(data.authenticated);
+            
+        } catch (error) {
+            console.error('Error checking auth status:', error);
+            this.updateAuthUI(false);
+        }
+    }
+    
+    updateAuthUI(isAuthenticated) {
+        const calendarContainer = document.querySelector('.calendar-container');
+        if (!calendarContainer) return;
+        
+        let authIndicator = document.getElementById('auth-indicator');
+        if (!authIndicator) {
+            authIndicator = document.createElement('div');
+            authIndicator.id = 'auth-indicator';
+            authIndicator.className = 'auth-indicator';
+            calendarContainer.prepend(authIndicator);
+        }
+        
+        if (isAuthenticated) {
+            authIndicator.innerHTML = `
+                <div class="auth-status connected">
+                    <span class="auth-icon">✓</span>
+                    <span>Connected to Google Calendar</span>
+                    <button onclick="dashboard.logout()" class="auth-btn logout-btn">Disconnect</button>
+                </div>
+            `;
+        } else {
+            authIndicator.innerHTML = `
+                <div class="auth-status disconnected">
+                    <span class="auth-icon">⚠</span>
+                    <span>Connect to Google Calendar to see your events</span>
+                    <button onclick="dashboard.authenticateGoogle()" class="auth-btn connect-btn">Connect</button>
+                </div>
+            `;
+        }
+    }
+    
+    authenticateGoogle() {
+        window.location.href = `${this.apiUrl}/auth/google`;
+    }
+    
+    async logout() {
+        try {
+            const response = await fetch(`${this.apiUrl}/auth/logout`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                this.showNotification('Disconnected from Google Calendar', 'info');
+                this.updateAuthUI(false);
+                this.loadGoogleCalendar();
+            }
+        } catch (error) {
+            console.error('Error logging out:', error);
+            this.showNotification('Error disconnecting from Google Calendar', 'error');
         }
     }
 }
@@ -492,8 +586,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing dashboard...');
     try {
         dashboard = new Dashboard();
+        // Make dashboard available globally for calendar events integration
+        window.dashboard = dashboard;
         console.log('Dashboard initialized successfully');
     } catch (error) {
         console.error('Error initializing dashboard:', error);
     }
 });
+
+// Keep the variable available globally
+window.dashboard = null;

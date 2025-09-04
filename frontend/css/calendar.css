@@ -21,7 +21,9 @@
     padding: 1rem 0;
 }
 
-.calendar-event {
+/* Compatibilité pour les nouvelles classes event-item */
+.calendar-event,
+.event-item {
     background: #262626;
     border-left: 4px solid #00d563;
     border-radius: 8px;
@@ -30,13 +32,15 @@
     animation: slideIn 0.3s ease;
 }
 
-.calendar-event:hover {
+.calendar-event:hover,
+.event-item:hover {
     background: #2a2a2a;
     transform: translateX(4px);
     box-shadow: 0 4px 12px rgba(0, 213, 99, 0.2);
 }
 
-.calendar-event-title {
+.calendar-event-title,
+.event-title {
     color: #ffffff;
     font-weight: 600;
     font-size: 0.95rem;
@@ -44,14 +48,16 @@
     line-height: 1.3;
 }
 
-.calendar-event-time {
+.calendar-event-time,
+.event-time {
     color: #00d563;
     font-size: 0.85rem;
     font-weight: 500;
     margin-bottom: 0.25rem;
 }
 
-.calendar-event-description {
+.calendar-event-description,
+.event-description {
     color: #b3b3b3;
     font-size: 0.8rem;
     line-height: 1.4;
@@ -68,21 +74,25 @@
 }
 
 /* Calendar Event States */
-.calendar-event.today {
+.calendar-event.today,
+.event-item.today {
     border-left-color: #28a745;
     background: #1a3d1a;
 }
 
-.calendar-event.today:hover {
+.calendar-event.today:hover,
+.event-item.today:hover {
     background: #1e4a1e;
 }
 
-.calendar-event.ongoing {
+.calendar-event.ongoing,
+.event-item.ongoing {
     border-left-color: #ffc107;
     background: #3d3d1a;
 }
 
-.calendar-event.ongoing:hover {
+.calendar-event.ongoing:hover,
+.event-item.ongoing:hover {
     background: #4a4a1e;
 }
 
@@ -141,4 +151,74 @@
     color: #dc3545;
     font-weight: 500;
     margin-bottom: 0.5rem;
+}
+
+/* Authentication UI */
+.auth-indicator {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+}
+
+.auth-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.auth-status.connected {
+    background: linear-gradient(135deg, #1a4d1a, #2a5a2a);
+    border-left: 4px solid #28a745;
+}
+
+.auth-status.disconnected {
+    background: linear-gradient(135deg, #4d1a1a, #5a2a2a);
+    border-left: 4px solid #dc3545;
+}
+
+.auth-icon {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.auth-status.connected .auth-icon {
+    color: #28a745;
+}
+
+.auth-status.disconnected .auth-icon {
+    color: #dc3545;
+}
+
+.auth-btn {
+    background: none;
+    border: 1px solid;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-left: auto;
+}
+
+.connect-btn {
+    border-color: #00d563;
+    color: #00d563;
+}
+
+.connect-btn:hover {
+    background: #00d563;
+    color: #000;
+}
+
+.logout-btn {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.logout-btn:hover {
+    background: #6c757d;
+    color: #fff;
 }

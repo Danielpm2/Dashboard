@@ -6,11 +6,13 @@ const router = express.Router();
 const panelsRoutes = require('./panels');
 const healthRoutes = require('./health');
 const calendarRoutes = require('./calendar');
+const authRoutes = require('./auth');
 
 // Mount routes
 router.use('/panels', panelsRoutes);
 router.use('/health', healthRoutes);
 router.use('/calendar', calendarRoutes);
+router.use('/auth', authRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
@@ -24,7 +26,10 @@ router.get('/', (req, res) => {
             specificPanel: '/api/panels/:panelKey',
             calendar: '/api/calendar',
             calendarEvents: '/api/calendar/events',
-            calendarEventsFormatted: '/api/calendar/events/formatted'
+            calendarEventsFormatted: '/api/calendar/events/formatted',
+            googleAuth: '/api/auth/google',
+            authStatus: '/api/auth/status',
+            authLogout: '/api/auth/logout'
         },
         documentation: {
             panels: {
@@ -39,7 +44,16 @@ router.get('/', (req, res) => {
             calendar: {
                 'GET /calendar/events': 'Get Google Calendar events (raw)',
                 'GET /calendar/events/formatted': 'Get formatted calendar events for dashboard',
+                'POST /calendar/events': 'Create a new calendar event',
+                'PUT /calendar/events/:eventId': 'Update an existing calendar event',
+                'DELETE /calendar/events/:eventId': 'Delete a calendar event',
                 'GET /calendar/test': 'Test calendar API connection'
+            },
+            auth: {
+                'GET /auth/google': 'Start Google OAuth2 authentication',
+                'GET /auth/google/callback': 'OAuth2 callback (automatic)',
+                'GET /auth/status': 'Check authentication status',
+                'POST /auth/logout': 'Logout and clear credentials'
             }
         }
     });

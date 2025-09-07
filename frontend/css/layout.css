@@ -50,35 +50,10 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-/* Left section specific layout for calendar and football */
+/* Left section back to normal calendar layout */
 .left-section {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 200px); /* Fixed height for proper proportions */
-    max-height: calc(100vh - 200px); /* Prevent overflow */
-    overflow: hidden; /* Prevent section overflow */
-}
-
-.calendar-section {
-    flex: 1; /* Changed to 1 - Takes 50% of available space */
-    display: flex;
-    flex-direction: column;
-    background: var(--card-background);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    margin-bottom: 16px;
-    min-height: 0; /* Allow proper flex shrinking */
-}
-
-.football-section {
-    flex: 1; /* Changed to 1 - Takes 50% of available space */
-    min-height: 0; /* Allow proper flex shrinking */
-    max-height: 50%; /* Prevent overflow when zooming */
-    background: #1a1a1a;
-    border-radius: 12px;
-    border: 1px solid #2a2a2a;
-    padding: 12px;
 }
 
 .dashboard-section h2 {

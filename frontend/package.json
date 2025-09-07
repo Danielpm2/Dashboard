@@ -1,0 +1,16 @@
+{
+  "name": "modern-dashboard",
+  "version": "1.0.0",
+  "description": "Modern customizable dashboard with grid system",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["dashboard", "grid", "widgets"],
+  "author": "",
+  "license": "MIT"
+}

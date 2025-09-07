@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    
+    <!-- Modern CSS Grid Styles -->
+    <link rel="stylesheet" href="styles/theme.css">
+    <link rel="stylesheet" href="styles/grid-system.css">
+    <link rel="stylesheet" href="styles/components.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Modern JavaScript Modules -->
+    <script type="module" src="js/dashboard-app.js"></script>
+</head>
+<body>
+    <!-- Header with customize toggle -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <h1><i class="fas fa-chart-line"></i> Dashboard project</h1>
+            <div class="header-controls">
+                <div class="time-display">
+                    <span id="current-time"></span>
+                </div>
+                <button id="customize-btn" class="customize-btn" title="Customize Dashboard">
+                    <i class="fas fa-edit"></i>
+                    <span>Customize</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main dashboard grid container -->
+    <main class="dashboard-main">
+        <div id="dashboard-grid" class="dashboard-grid">
+            <!-- Widgets will be dynamically added here -->
+            
+            <!-- Default starter widgets -->
+            <dashboard-widget 
+                data-widget-type="welcome" 
+                data-widget-id="welcome-1"
+                data-grid-position="1 / 1 / 2 / 4"
+                class="widget-item">
+            </dashboard-widget>
+
+            <dashboard-widget 
+                data-widget-type="notes" 
+                data-widget-id="notes-1"
+                data-grid-position="2 / 1 / 4 / 3"
+                class="widget-item">
+            </dashboard-widget>
+
+            <dashboard-widget 
+                data-widget-type="calendar" 
+                data-widget-id="calendar-1"
+                data-grid-position="1 / 4 / 5 / 7"
+                class="widget-item">
+            </dashboard-widget>
+        </div>
+
+        <!-- Widget Add Panel (shown in customize mode) -->
+        <div id="widget-panel" class="widget-panel hidden">
+            <div class="widget-panel-header">
+                <h3><i class="fas fa-plus"></i> Add Widgets</h3>
+                <button id="done-customizing" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Done
+                </button>
+            </div>
+            <div class="widget-types">
+                <button class="widget-type-btn" data-widget-type="notes">
+                    <i class="fas fa-sticky-note"></i>
+                    <span>Notes</span>
+                </button>
+                <button class="widget-type-btn" data-widget-type="calendar">
+                    <i class="fas fa-calendar"></i>
+                    <span>Calendar</span>
+                </button>
+                <button class="widget-type-btn" data-widget-type="clock">
+                    <i class="fas fa-clock"></i>
+                    <span>Clock</span>
+                </button>
+                <button class="widget-type-btn" data-widget-type="image">
+                    <i class="fas fa-image"></i>
+                    <span>Image</span>
+                </button>
+                <button class="widget-type-btn" data-widget-type="links">
+                    <i class="fas fa-link"></i>
+                    <span>Quick Links</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Grid overlay for positioning (shown in customize mode) -->
+    <div id="grid-overlay" class="grid-overlay hidden"></div>
+</body>
+</html>

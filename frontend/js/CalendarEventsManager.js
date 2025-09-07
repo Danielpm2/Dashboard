@@ -39,11 +39,15 @@ class CalendarEventsManager {
             const data = await this.api.loadEvents();
             
             if (data.success) {
-                // Store events for internal use but don't display them
-                // Let the dashboard handle the display
+                // Store events for internal use
                 this.events = data.events;
                 
-                // Just refresh the main dashboard calendar display
+                // Dispatch custom event for visual calendar manager
+                document.dispatchEvent(new CustomEvent('calendar-events-updated', {
+                    detail: { events: data.events }
+                }));
+                
+                // Refresh the main dashboard calendar display
                 await DashboardUtils.refreshCalendar();
             } else {
                 console.error('Erreur chargement événements:', data.error);
@@ -80,8 +84,8 @@ class CalendarEventsManager {
                     mode === 'edit' ? 'Événement modifié avec succès' : 'Événement créé avec succès'
                 );
                 
-                // Refresh the main dashboard calendar display
-                await DashboardUtils.refreshCalendar();
+                // Reload events to update both views
+                await this.loadEvents();
             } else {
                 NotificationManager.error(response.error || 'Erreur lors de la sauvegarde');
             }
@@ -118,8 +122,8 @@ class CalendarEventsManager {
                 console.log('Event deleted successfully, refreshing dashboard...');
                 NotificationManager.success('Événement supprimé avec succès');
                 
-                // Refresh the main dashboard calendar display
-                await DashboardUtils.refreshCalendar();
+                // Reload events to update both views
+                await this.loadEvents();
             } else {
                 NotificationManager.error(data.error || 'Erreur lors de la suppression');
             }
@@ -127,6 +131,11 @@ class CalendarEventsManager {
             console.error('Erreur:', error);
             NotificationManager.error('Erreur de connexion');
         }
+    }
+
+    // Get current events for other managers
+    getEvents() {
+        return this.events;
     }
 }
 

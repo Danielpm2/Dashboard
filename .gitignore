@@ -14,6 +14,7 @@ yarn-error.log*
 
 # Google OAuth2 credentials (security)
 backend/config/google-credentials.json
+backend/api/config/google-credentials.json
 
 # Database
 *.db

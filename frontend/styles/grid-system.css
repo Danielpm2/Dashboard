@@ -2,9 +2,9 @@
 
 :root {
     --grid-columns: 6;
-    --grid-rows: 6;
-    --grid-gap: 16px;
-    --grid-cell-size: 120px;
+    --grid-rows: 8;
+    --grid-gap: 20px;
+    --grid-cell-size: 140px;
     --header-height: 70px;
 }
 
@@ -17,12 +17,14 @@
     padding: var(--grid-gap);
     min-height: calc(100vh - var(--header-height));
     position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 /* Widget Base Styles */
 .widget-item {
     background: var(--widget-background);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-widget);
     border: 2px solid transparent;
     transition: all var(--transition-base);
@@ -30,6 +32,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
+    min-height: 200px;
 }
 
 .widget-item:hover {

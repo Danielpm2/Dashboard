@@ -250,6 +250,126 @@
     }
 }
 
+/* Weather Widget Styles */
+.weather-widget .weather-info {
+    padding: 16px;
+    text-align: center;
+}
+
+.weather-widget .weather-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.weather-widget .temperature {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+}
+
+.weather-widget .weather-icon i {
+    font-size: 2rem;
+    color: #f39c12;
+}
+
+.weather-widget .weather-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: var(--font-size-sm);
+}
+
+.weather-widget .location {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.weather-widget .conditions {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* Todo Widget Styles */
+.todo-widget .add-todo-form {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-background-alt);
+}
+
+.todo-widget .add-todo-form input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+    font-size: var(--font-size-sm);
+}
+
+.todo-widget .todo-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.todo-widget .todo-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.todo-widget .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color var(--transition-fast);
+}
+
+.todo-widget .todo-item:hover {
+    background: var(--color-background-alt);
+}
+
+.todo-widget .todo-item input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.todo-widget .todo-item label {
+    flex: 1;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+}
+
+.todo-widget .todo-item label.completed {
+    text-decoration: line-through;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+}
+
+.todo-widget .delete-todo-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--border-radius);
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.todo-widget .todo-item:hover .delete-todo-btn {
+    opacity: 1;
+}
+
+.todo-widget .delete-todo-btn:hover {
+    color: var(--color-danger);
+    background: rgba(var(--color-danger-rgb), 0.1);
+}
+
 /* Widget Controls Enhancement */
 .widget-controls {
     position: absolute;

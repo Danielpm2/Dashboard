@@ -41,8 +41,13 @@ class DashboardApp {
         // Initialize grid system
         this.initGridSystem();
         
-        // Initialize widgets
-        this.initWidgets();
+        // Try to load saved layout, if none exists use default widgets
+        const layoutLoaded = await this.loadLayout();
+        
+        if (!layoutLoaded) {
+            // Initialize default widgets if no saved layout
+            this.initWidgets();
+        }
         
         // Add global mouse handlers
         this.initGlobalMouseHandlers();
@@ -123,17 +128,28 @@ class DashboardApp {
 
     // Check if a grid position is available
     isPositionAvailable(gridPosition, excludeWidget = null) {
+        const newPos = this.parseGridPosition(gridPosition);
         const widgets = document.querySelectorAll('dashboard-widget[data-grid-position]');
         
         for (const widget of widgets) {
             if (widget === excludeWidget) continue;
             
             const existingPosition = widget.dataset.gridPosition;
-            if (existingPosition === gridPosition) {
-                return false;
-            }
+            if (!existingPosition) continue;
             
-            // TODO: Add more sophisticated overlap detection
+            const existingPos = this.parseGridPosition(existingPosition);
+            
+            // Check for overlap
+            const noOverlap = (
+                newPos.endRow <= existingPos.startRow ||
+                newPos.startRow >= existingPos.endRow ||
+                newPos.endCol <= existingPos.startCol ||
+                newPos.startCol >= existingPos.endCol
+            );
+            
+            if (!noOverlap) {
+                return false; // Overlap detected
+            }
         }
         
         return true;
@@ -186,25 +202,31 @@ class DashboardApp {
         if (this.customizeMode) {
             this.addWidgetControls(widget);
         }
+
+        // Visual feedback
+        widget.style.opacity = '0';
+        widget.style.transform = 'scale(0.8)';
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            widget.style.transition = 'all 0.3s ease';
+            widget.style.opacity = '1';
+            widget.style.transform = 'scale(1)';
+        });
+
+        console.log(`✅ Added ${type} widget successfully at position: ${position}`);
+        
+        // Save layout after adding widget
+        this.saveLayout();
     }
 
     // Find next available grid position
-    findNextAvailablePosition() {
-        const occupiedPositions = new Set();
-        
-        // Get all current widget positions
-        document.querySelectorAll('dashboard-widget[data-grid-position]').forEach(widget => {
-            const pos = widget.dataset.gridPosition;
-            if (pos) {
-                occupiedPositions.add(pos);
-            }
-        });
-
-        // Find first available 2x2 area
-        for (let row = 1; row <= this.gridRows - 1; row++) {
-            for (let col = 1; col <= this.gridColumns - 1; col++) {
-                const position = `${row} / ${col} / ${row + 2} / ${col + 2}`;
-                if (!occupiedPositions.has(position)) {
+    findNextAvailablePosition(width = 2, height = 2) {
+        // Try to find space starting from top-left
+        for (let row = 1; row <= this.gridRows - height + 1; row++) {
+            for (let col = 1; col <= this.gridColumns - width + 1; col++) {
+                const position = this.createGridPosition(row, col, row + height, col + width);
+                if (this.isPositionAvailable(position)) {
                     return position;
                 }
             }
@@ -223,6 +245,9 @@ class DashboardApp {
         
         // Remove from DOM
         widgetElement.remove();
+        
+        // Save layout after removing widget
+        this.saveLayout();
     }
 
     // Add controls to widget in customize mode
@@ -437,6 +462,9 @@ class DashboardApp {
             this.draggedWidget.dataset.gridPosition = newPosition;
             this.draggedWidget.style.gridArea = newPosition;
             console.log(`Moved widget to: ${newPosition}`);
+            
+            // Save layout after moving
+            this.saveLayout();
         } else {
             console.log('Position not available, reverting');
         }
@@ -488,6 +516,9 @@ class DashboardApp {
                 this.resizingWidget.dataset.gridPosition = newPosition;
                 this.resizingWidget.style.gridArea = newPosition;
                 console.log(`Resized widget to: ${newPosition}`);
+                
+                // Save layout after resizing
+                this.saveLayout();
             }
         }
         
@@ -569,6 +600,12 @@ class DashboardApp {
                     break;
                 case 'links':
                     this.initLinksWidget(element, widgetId);
+                    break;
+                case 'weather':
+                    this.initWeatherWidget(element, widgetId);
+                    break;
+                case 'todo':
+                    this.initTodoWidget(element, widgetId);
                     break;
                 default:
                     console.warn(`Unknown widget type: ${widgetType}`);
@@ -748,6 +785,242 @@ class DashboardApp {
         element.classList.add('links-widget');
     }
 
+    // Initialize Weather Widget
+    initWeatherWidget(element, id) {
+        console.log(`Initializing Weather Widget: ${id}`);
+        
+        element.innerHTML = `
+            <div class="widget-header">
+                <h3><i class="fas fa-cloud-sun"></i> Weather</h3>
+                <button class="widget-action-btn" title="Refresh Weather">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="widget-content weather-content">
+                <div class="weather-info">
+                    <div class="weather-main">
+                        <div class="temperature">23°C</div>
+                        <div class="weather-icon">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                    </div>
+                    <div class="weather-details">
+                        <div class="location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>New York, NY</span>
+                        </div>
+                        <div class="conditions">Sunny</div>
+                        <div class="humidity">
+                            <i class="fas fa-tint"></i>
+                            <span>Humidity: 45%</span>
+                        </div>
+                        <div class="wind">
+                            <i class="fas fa-wind"></i>
+                            <span>Wind: 8 km/h</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        element.classList.add('weather-widget');
+    }
+
+    // Initialize Todo Widget
+    initTodoWidget(element, id) {
+        console.log(`Initializing Todo Widget: ${id}`);
+        
+        element.innerHTML = `
+            <div class="widget-header">
+                <h3><i class="fas fa-check-square"></i> Todo List</h3>
+                <button class="widget-action-btn" id="add-todo-${id}" title="Add Todo">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="widget-content todo-content">
+                <div class="add-todo-form hidden" id="add-todo-form-${id}">
+                    <input type="text" placeholder="What needs to be done?" id="todo-input-${id}" maxlength="100">
+                    <div class="todo-actions">
+                        <button class="btn btn-sm btn-primary" id="save-todo-${id}">Add</button>
+                        <button class="btn btn-sm btn-secondary" id="cancel-todo-${id}">Cancel</button>
+                    </div>
+                </div>
+                <div class="todo-list" id="todo-list-${id}">
+                    <div class="todo-item">
+                        <input type="checkbox" id="todo-1-${id}">
+                        <label for="todo-1-${id}">Review project requirements</label>
+                        <button class="delete-todo-btn" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="todo-item">
+                        <input type="checkbox" id="todo-2-${id}" checked>
+                        <label for="todo-2-${id}" class="completed">Set up development environment</label>
+                        <button class="delete-todo-btn" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="todo-item">
+                        <input type="checkbox" id="todo-3-${id}">
+                        <label for="todo-3-${id}">Write unit tests</label>
+                        <button class="delete-todo-btn" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        element.classList.add('todo-widget');
+        
+        // Add todo functionality
+        this.bindTodoEvents(element, id);
+    }
+
+    // Bind todo widget events
+    bindTodoEvents(element, id) {
+        const addBtn = element.querySelector(`#add-todo-${id}`);
+        const addForm = element.querySelector(`#add-todo-form-${id}`);
+        const todoInput = element.querySelector(`#todo-input-${id}`);
+        const saveBtn = element.querySelector(`#save-todo-${id}`);
+        const cancelBtn = element.querySelector(`#cancel-todo-${id}`);
+        const todoList = element.querySelector(`#todo-list-${id}`);
+
+        // Show add form
+        addBtn?.addEventListener('click', () => {
+            addForm?.classList.remove('hidden');
+            todoInput?.focus();
+        });
+
+        // Hide add form
+        cancelBtn?.addEventListener('click', () => {
+            addForm?.classList.add('hidden');
+            todoInput.value = '';
+        });
+
+        // Save todo
+        saveBtn?.addEventListener('click', () => {
+            const text = todoInput?.value.trim();
+            if (text) {
+                this.addTodoItem(todoList, text, id);
+                todoInput.value = '';
+                addForm?.classList.add('hidden');
+            }
+        });
+
+        // Enter to save
+        todoInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveBtn?.click();
+            }
+        });
+
+        // Bind existing todo events
+        this.bindExistingTodoEvents(element, id);
+    }
+
+    // Add new todo item
+    addTodoItem(todoList, text, widgetId) {
+        const todoId = `todo-${Date.now()}-${widgetId}`;
+        const todoItem = document.createElement('div');
+        todoItem.className = 'todo-item';
+        todoItem.innerHTML = `
+            <input type="checkbox" id="${todoId}">
+            <label for="${todoId}">${this.escapeHtml(text)}</label>
+            <button class="delete-todo-btn" title="Delete">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        
+        todoList.appendChild(todoItem);
+        this.bindTodoItemEvents(todoItem);
+    }
+
+    // Bind events for existing todo items
+    bindExistingTodoEvents(element, id) {
+        const todoItems = element.querySelectorAll('.todo-item');
+        todoItems.forEach(item => this.bindTodoItemEvents(item));
+    }
+
+    // Bind events for a single todo item
+    bindTodoItemEvents(todoItem) {
+        const checkbox = todoItem.querySelector('input[type="checkbox"]');
+        const label = todoItem.querySelector('label');
+        const deleteBtn = todoItem.querySelector('.delete-todo-btn');
+
+        // Toggle completion
+        checkbox?.addEventListener('change', () => {
+            if (checkbox.checked) {
+                label?.classList.add('completed');
+            } else {
+                label?.classList.remove('completed');
+            }
+        });
+
+        // Delete todo
+        deleteBtn?.addEventListener('click', () => {
+            if (confirm('Delete this todo item?')) {
+                todoItem.remove();
+            }
+        });
+    }
+
+    // Escape HTML for security
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Reset dashboard to default layout
+    resetToDefaultLayout() {
+        if (confirm('Reset dashboard to default layout? This will remove all custom positioning and added widgets.')) {
+            console.log('🔄 Resetting to default layout');
+            
+            // Clear saved layout
+            localStorage.removeItem('dashboard-layout');
+            
+            // Reload the page to restore default
+            window.location.reload();
+        }
+    }
+
+    // Export layout as JSON (for backup/sharing)
+    exportLayout() {
+        const layout = this.saveLayout();
+        const dataStr = JSON.stringify(layout, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `dashboard-layout-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        console.log('📥 Layout exported');
+    }
+
+    // Import layout from JSON file
+    importLayout(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const layout = JSON.parse(e.target.result);
+                localStorage.setItem('dashboard-layout', JSON.stringify(layout));
+                
+                console.log('📤 Layout imported, reloading...');
+                window.location.reload();
+                
+            } catch (error) {
+                console.error('Failed to import layout:', error);
+                alert('Invalid layout file');
+            }
+        };
+        reader.readAsText(file);
+    }
+
     // Show error in widget
     showWidgetError(element, message) {
         element.innerHTML = `
@@ -795,15 +1068,34 @@ class DashboardApp {
         if (!customizeBtn) return;
 
         customizeBtn.addEventListener('click', () => {
+            console.log('Customize button clicked');
             this.toggleCustomizeMode();
         });
 
         doneBtn?.addEventListener('click', () => {
             this.exitCustomizeMode();
         });
+
+        // Layout management buttons
+        const resetBtn = document.getElementById('reset-layout-btn');
+        const exportBtn = document.getElementById('export-layout-btn');
+        const importInput = document.getElementById('import-layout');
+
+        resetBtn?.addEventListener('click', () => {
+            this.resetToDefaultLayout();
+        });
+
+        exportBtn?.addEventListener('click', () => {
+            this.exportLayout();
+        });
+
+        importInput?.addEventListener('change', (e) => {
+            this.importLayout(e);
+        });
     }
 
     toggleCustomizeMode() {
+        console.log('Toggle customize mode, current mode:', this.customizeMode);
         if (this.customizeMode) {
             this.exitCustomizeMode();
         } else {
@@ -818,13 +1110,20 @@ class DashboardApp {
         const customizeBtn = document.getElementById('customize-btn');
         const widgetPanel = document.getElementById('widget-panel');
         const gridOverlay = document.getElementById('grid-overlay');
+        
+        console.log('Widget panel element:', widgetPanel);
+        console.log('Widget panel classes before:', widgetPanel?.className);
 
         if (customizeBtn) {
             customizeBtn.classList.add('active');
             customizeBtn.innerHTML = '<i class="fas fa-times"></i><span>Exit</span>';
         }
 
-        widgetPanel?.classList.remove('hidden');
+        if (widgetPanel) {
+            widgetPanel.classList.remove('hidden');
+            widgetPanel.classList.add('show');
+            console.log('Widget panel classes after:', widgetPanel.className);
+        }
         if (gridOverlay) {
             gridOverlay.classList.remove('hidden');
             gridOverlay.classList.add('show');
@@ -854,7 +1153,10 @@ class DashboardApp {
             customizeBtn.innerHTML = '<i class="fas fa-edit"></i><span>Customize</span>';
         }
 
-        widgetPanel?.classList.add('hidden');
+        if (widgetPanel) {
+            widgetPanel.classList.remove('show');
+            widgetPanel.classList.add('hidden');
+        }
         if (gridOverlay) {
             gridOverlay.classList.add('hidden');
             gridOverlay.classList.remove('show');
@@ -891,37 +1193,102 @@ class DashboardApp {
         }
     }
 
-    // Save dashboard layout (for future persistence)
+    // Save dashboard layout to localStorage
     saveLayout() {
-        const layout = {};
+        const layout = {
+            widgets: {},
+            lastSaved: new Date().toISOString()
+        };
+        
         document.querySelectorAll('dashboard-widget').forEach(widget => {
             const id = widget.dataset.widgetId;
             const position = widget.dataset.gridPosition;
             const type = widget.dataset.widgetType;
             
-            layout[id] = {
-                type,
-                position,
-                style: widget.style.gridArea
-            };
+            if (id && position && type) {
+                layout.widgets[id] = {
+                    type,
+                    position,
+                    gridArea: widget.style.gridArea
+                };
+            }
         });
         
-        console.log('💾 Dashboard layout:', layout);
-        // Here you could save to localStorage or send to backend
+        console.log('💾 Saving dashboard layout:', layout);
         localStorage.setItem('dashboard-layout', JSON.stringify(layout));
+        return layout;
     }
 
-    // Load dashboard layout (for future persistence)
-    loadLayout() {
+    // Load dashboard layout from localStorage
+    async loadLayout() {
         try {
             const savedLayout = localStorage.getItem('dashboard-layout');
-            if (savedLayout) {
-                const layout = JSON.parse(savedLayout);
-                console.log('📂 Loading saved layout:', layout);
-                // Here you could restore widget positions
+            if (!savedLayout) {
+                console.log('📂 No saved layout found, using default');
+                return false;
             }
+            
+            const layout = JSON.parse(savedLayout);
+            console.log('📂 Loading saved layout:', layout);
+            
+            if (!layout.widgets) {
+                console.warn('Invalid layout format');
+                return false;
+            }
+            
+            // Clear existing widgets first
+            this.clearAllWidgets();
+            
+            // Restore widgets from saved layout
+            for (const [widgetId, widgetData] of Object.entries(layout.widgets)) {
+                await this.restoreWidget(widgetId, widgetData);
+            }
+            
+            console.log('✅ Layout restored successfully');
+            return true;
+            
         } catch (error) {
             console.error('Failed to load layout:', error);
+            return false;
+        }
+    }
+
+    // Clear all existing widgets
+    clearAllWidgets() {
+        const existingWidgets = document.querySelectorAll('dashboard-widget');
+        existingWidgets.forEach(widget => {
+            const widgetId = widget.dataset.widgetId;
+            if (widgetId) {
+                this.widgets.delete(widgetId);
+            }
+            widget.remove();
+        });
+    }
+
+    // Restore a single widget from saved data
+    async restoreWidget(widgetId, widgetData) {
+        try {
+            const { type, position } = widgetData;
+            
+            // Create widget element
+            const widget = document.createElement('dashboard-widget');
+            widget.dataset.widgetType = type;
+            widget.dataset.widgetId = widgetId;
+            widget.dataset.gridPosition = position;
+            widget.className = 'widget-item';
+            widget.style.gridArea = position;
+
+            // Add to grid
+            const grid = document.getElementById('dashboard-grid');
+            grid.appendChild(widget);
+
+            // Initialize the widget
+            this.initSingleWidget(widget, type, widgetId);
+
+            console.log(`✅ Restored ${type} widget: ${widgetId} at ${position}`);
+            
+        } catch (error) {
+            console.error(`Failed to restore widget ${widgetId}:`, error);
         }
     }
 }

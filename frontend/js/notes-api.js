@@ -11,13 +11,26 @@ class NotesAPI {
     // GET all notes
     async getAllNotes() {
         try {
+            console.log('📡 Fetching all notes from:', `${this.baseURL}/notes`);
+            
             const response = await fetch(`${this.baseURL}/notes`);
+            
+            console.log('📡 Response status:', response.status);
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return await response.json();
+            
+            const notes = await response.json();
+            console.log('📡 Fetched notes:', notes);
+            return notes;
         } catch (error) {
-            console.error('Error fetching notes:', error);
+            console.error('❌ Error fetching notes:', error);
+            
+            // Provide more specific error messages
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                throw new Error('Cannot connect to server. Please check if the backend is running on port 3000.');
+            }
             throw new Error('Failed to fetch notes');
         }
     }
@@ -48,6 +61,8 @@ class NotesAPI {
     async createNote(noteData) {
         try {
             const sanitizedData = this.validateAndSanitizeNoteData(noteData);
+            
+            console.log('📡 Making API request to create note:', sanitizedData);
 
             const response = await fetch(`${this.baseURL}/notes`, {
                 method: 'POST',
@@ -57,13 +72,23 @@ class NotesAPI {
                 body: JSON.stringify(sanitizedData)
             });
 
+            console.log('📡 API Response status:', response.status);
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
-            return await response.json();
+            
+            const result = await response.json();
+            console.log('📡 API Response data:', result);
+            return result;
         } catch (error) {
-            console.error('Error creating note:', error);
+            console.error('❌ API Error creating note:', error);
+            
+            // Provide more specific error messages
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                throw new Error('Cannot connect to server. Please check if the backend is running.');
+            }
             throw error;
         }
     }

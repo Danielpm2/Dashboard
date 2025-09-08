@@ -11,6 +11,11 @@ class DashboardApp {
         this.gridRows = 8;
         this.draggedWidget = null;
         this.resizingWidget = null;
+        this.selectedWidget = null;
+        this.isDragging = false;
+        this.isResizing = false;
+        this.dragStartPos = null;
+        this.resizeDirection = null;
         this.init();
     }
 
@@ -38,6 +43,9 @@ class DashboardApp {
         
         // Initialize widgets
         this.initWidgets();
+        
+        // Add global mouse handlers
+        this.initGlobalMouseHandlers();
         
         console.log('✅ Dashboard App Ready!');
     }
@@ -88,16 +96,50 @@ class DashboardApp {
         const gridOverlay = document.getElementById('grid-overlay');
         if (!gridOverlay) return;
 
+        // Clear existing cells
+        gridOverlay.innerHTML = '';
+
         // Create grid cells for visual feedback
         const totalCells = this.gridColumns * this.gridRows;
         for (let i = 0; i < totalCells; i++) {
+            const row = Math.floor(i / this.gridColumns) + 1;
+            const col = (i % this.gridColumns) + 1;
+            
             const cell = document.createElement('div');
             cell.className = 'grid-cell';
             cell.dataset.cellIndex = i;
-            cell.textContent = i + 1;
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            cell.textContent = `${row},${col}`;
+            
+            // Grid cells are now primarily for visual feedback
+            // Positioning is handled by drag and drop
+            
             gridOverlay.appendChild(cell);
         }
     }
+
+
+
+    // Check if a grid position is available
+    isPositionAvailable(gridPosition, excludeWidget = null) {
+        const widgets = document.querySelectorAll('dashboard-widget[data-grid-position]');
+        
+        for (const widget of widgets) {
+            if (widget === excludeWidget) continue;
+            
+            const existingPosition = widget.dataset.gridPosition;
+            if (existingPosition === gridPosition) {
+                return false;
+            }
+            
+            // TODO: Add more sophisticated overlap detection
+        }
+        
+        return true;
+    }
+
+
 
     // Initialize widget panel with add/remove functionality
     initWidgetPanel() {
@@ -194,20 +236,18 @@ class DashboardApp {
         const controls = document.createElement('div');
         controls.className = 'widget-controls';
         controls.innerHTML = `
-            <button class="widget-control-btn resize-btn" title="Resize">
-                <i class="fas fa-expand-arrows-alt"></i>
-            </button>
             <button class="widget-control-btn remove-btn" title="Remove">
                 <i class="fas fa-trash"></i>
             </button>
+            <div class="resize-handle resize-handle-se" title="Resize"></div>
+            <div class="resize-handle resize-handle-s" title="Resize Height"></div>
+            <div class="resize-handle resize-handle-e" title="Resize Width"></div>
         `;
 
         widget.appendChild(controls);
 
         // Bind control events
         const removeBtn = controls.querySelector('.remove-btn');
-        const resizeBtn = controls.querySelector('.resize-btn');
-
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (confirm('Remove this widget?')) {
@@ -215,28 +255,286 @@ class DashboardApp {
             }
         });
 
-        resizeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.startResize(widget);
+        // Add resize handles
+        this.addResizeHandles(widget);
+        
+        // Add drag functionality
+        this.addDragFunctionality(widget);
+    }
+
+
+
+    // Add drag functionality to widget
+    addDragFunctionality(widget) {
+        let startX, startY, startGridCol, startGridRow;
+        
+        const handleMouseDown = (e) => {
+            if (!this.customizeMode || e.target.closest('.widget-controls') || e.target.closest('.resize-handle')) {
+                return;
+            }
+            
+            this.isDragging = true;
+            this.draggedWidget = widget;
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            // Get current position
+            const position = this.parseGridPosition(widget.dataset.gridPosition);
+            startGridCol = position.startCol;
+            startGridRow = position.startRow;
+            
+            widget.classList.add('dragging');
+            document.body.style.cursor = 'grabbing';
+            
+            e.preventDefault();
+        };
+        
+        widget.addEventListener('mousedown', handleMouseDown);
+    }
+
+    // Add resize handles functionality
+    addResizeHandles(widget) {
+        const handles = widget.querySelectorAll('.resize-handle');
+        
+        handles.forEach(handle => {
+            handle.addEventListener('mousedown', (e) => {
+                if (!this.customizeMode) return;
+                
+                e.stopPropagation();
+                e.preventDefault();
+                
+                this.isResizing = true;
+                this.resizingWidget = widget;
+                this.resizeDirection = handle.classList.contains('resize-handle-se') ? 'se' :
+                                    handle.classList.contains('resize-handle-s') ? 's' : 'e';
+                
+                widget.classList.add('resizing');
+                document.body.style.cursor = this.getResizeCursor(this.resizeDirection);
+            });
         });
     }
 
-    // Start resize mode for widget
-    startResize(widget) {
-        console.log('🔄 Starting resize mode');
-        this.resizingWidget = widget;
-        widget.classList.add('resizing');
-        
-        // Add resize handles or show grid for selection
-        this.showResizeGrid(widget);
+    // Get appropriate cursor for resize direction
+    getResizeCursor(direction) {
+        switch (direction) {
+            case 'se': return 'se-resize';
+            case 's': return 's-resize';
+            case 'e': return 'e-resize';
+            default: return 'resize';
+        }
     }
 
-    // Show resize grid
-    showResizeGrid(widget) {
-        // This is a placeholder for resize functionality
-        // You can implement click-to-resize on grid cells
-        console.log('Resize grid shown for widget:', widget.dataset.widgetId);
+    // Parse grid position string into object
+    parseGridPosition(gridPosition) {
+        const parts = gridPosition.split(' / ').map(Number);
+        return {
+            startRow: parts[0],
+            startCol: parts[1],
+            endRow: parts[2],
+            endCol: parts[3]
+        };
     }
+
+    // Create grid position string from coordinates
+    createGridPosition(startRow, startCol, endRow, endCol) {
+        return `${startRow} / ${startCol} / ${endRow} / ${endCol}`;
+    }
+
+    // Get grid cell from mouse coordinates  
+    getGridCellFromCoords(x, y) {
+        const grid = document.getElementById('dashboard-grid');
+        const gridRect = grid.getBoundingClientRect();
+        
+        // Calculate relative position within grid
+        const relativeX = x - gridRect.left;
+        const relativeY = y - gridRect.top;
+        
+        // Account for gap and calculate cell
+        const cellWidth = (gridRect.width - (this.gridColumns - 1) * 20) / this.gridColumns;
+        const cellHeight = 140 + 20; // cell height + gap
+        
+        const col = Math.max(1, Math.min(this.gridColumns, Math.floor(relativeX / (cellWidth + 20)) + 1));
+        const row = Math.max(1, Math.min(this.gridRows, Math.floor(relativeY / cellHeight) + 1));
+        
+        return { row, col };
+    }
+
+    // End resize mode
+    endResize() {
+        if (this.resizingWidget) {
+            this.resizingWidget.classList.remove('resizing');
+            this.resizingWidget = null;
+            this.isResizing = false;
+            this.resizeDirection = null;
+            document.body.style.cursor = '';
+        }
+    }
+
+    // End drag mode
+    endDrag() {
+        if (this.draggedWidget) {
+            this.draggedWidget.classList.remove('dragging');
+            this.draggedWidget = null;
+            this.isDragging = false;
+            document.body.style.cursor = '';
+        }
+    }
+
+    // Initialize global mouse handlers for drag and resize
+    initGlobalMouseHandlers() {
+        document.addEventListener('mousemove', (e) => {
+            if (this.isDragging && this.draggedWidget) {
+                this.handleDrag(e);
+            } else if (this.isResizing && this.resizingWidget) {
+                this.handleResize(e);
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (this.isDragging) {
+                this.finalizeDrag(e);
+            } else if (this.isResizing) {
+                this.finalizeResize(e);
+            }
+        });
+    }
+
+    // Handle drag movement
+    handleDrag(e) {
+        const cell = this.getGridCellFromCoords(e.clientX, e.clientY);
+        
+        // Visual feedback - highlight drop zone
+        this.highlightDropZone(cell.row, cell.col);
+    }
+
+    // Handle resize movement
+    handleResize(e) {
+        const cell = this.getGridCellFromCoords(e.clientX, e.clientY);
+        
+        // Visual feedback - show potential new size
+        this.previewResize(cell.row, cell.col);
+    }
+
+    // Finalize drag operation
+    finalizeDrag(e) {
+        if (!this.draggedWidget) return;
+        
+        const cell = this.getGridCellFromCoords(e.clientX, e.clientY);
+        const currentPosition = this.parseGridPosition(this.draggedWidget.dataset.gridPosition);
+        
+        // Calculate widget dimensions
+        const width = currentPosition.endCol - currentPosition.startCol;
+        const height = currentPosition.endRow - currentPosition.startRow;
+        
+        // Create new position
+        const newEndCol = Math.min(this.gridColumns + 1, cell.col + width);
+        const newEndRow = Math.min(this.gridRows + 1, cell.row + height);
+        const newPosition = this.createGridPosition(cell.row, cell.col, newEndRow, newEndCol);
+        
+        // Check if position is valid
+        if (this.isPositionAvailable(newPosition, this.draggedWidget)) {
+            this.draggedWidget.dataset.gridPosition = newPosition;
+            this.draggedWidget.style.gridArea = newPosition;
+            console.log(`Moved widget to: ${newPosition}`);
+        } else {
+            console.log('Position not available, reverting');
+        }
+        
+        this.clearDropZoneHighlight();
+        this.endDrag();
+    }
+
+    // Finalize resize operation
+    finalizeResize(e) {
+        if (!this.resizingWidget) return;
+        
+        const cell = this.getGridCellFromCoords(e.clientX, e.clientY);
+        const currentPosition = this.parseGridPosition(this.resizingWidget.dataset.gridPosition);
+        
+        let newPosition;
+        
+        switch (this.resizeDirection) {
+            case 'se':
+                newPosition = this.createGridPosition(
+                    currentPosition.startRow,
+                    currentPosition.startCol,
+                    Math.min(this.gridRows + 1, cell.row + 1),
+                    Math.min(this.gridColumns + 1, cell.col + 1)
+                );
+                break;
+            case 's':
+                newPosition = this.createGridPosition(
+                    currentPosition.startRow,
+                    currentPosition.startCol,
+                    Math.min(this.gridRows + 1, cell.row + 1),
+                    currentPosition.endCol
+                );
+                break;
+            case 'e':
+                newPosition = this.createGridPosition(
+                    currentPosition.startRow,
+                    currentPosition.startCol,
+                    currentPosition.endRow,
+                    Math.min(this.gridColumns + 1, cell.col + 1)
+                );
+                break;
+        }
+        
+        // Ensure minimum size
+        const position = this.parseGridPosition(newPosition);
+        if (position.endRow > position.startRow + 1 && position.endCol > position.startCol + 1) {
+            if (this.isPositionAvailable(newPosition, this.resizingWidget)) {
+                this.resizingWidget.dataset.gridPosition = newPosition;
+                this.resizingWidget.style.gridArea = newPosition;
+                console.log(`Resized widget to: ${newPosition}`);
+            }
+        }
+        
+        this.clearResizePreview();
+        this.endResize();
+    }
+
+    // Highlight drop zone during drag
+    highlightDropZone(row, col) {
+        this.clearDropZoneHighlight();
+        
+        if (!this.draggedWidget) return;
+        
+        const currentPosition = this.parseGridPosition(this.draggedWidget.dataset.gridPosition);
+        const width = currentPosition.endCol - currentPosition.startCol;
+        const height = currentPosition.endRow - currentPosition.startRow;
+        
+        // Highlight cells that would be occupied
+        for (let r = row; r < row + height && r <= this.gridRows; r++) {
+            for (let c = col; c < col + width && c <= this.gridColumns; c++) {
+                const cell = document.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
+                if (cell) {
+                    cell.classList.add('drop-zone');
+                }
+            }
+        }
+    }
+
+    // Clear drop zone highlighting
+    clearDropZoneHighlight() {
+        document.querySelectorAll('.grid-cell.drop-zone').forEach(cell => {
+            cell.classList.remove('drop-zone');
+        });
+    }
+
+    // Preview resize during resize operation
+    previewResize(row, col) {
+        // Implementation for resize preview can be added here
+        // For now, we'll keep it simple
+    }
+
+    // Clear resize preview
+    clearResizePreview() {
+        // Clear any resize preview styling
+    }
+
+
 
     // Initialize all dashboard widgets
     initWidgets() {
@@ -246,25 +544,39 @@ class DashboardApp {
             const widgetType = widget.dataset.widgetType;
             const widgetId = widget.dataset.widgetId;
             
-            try {
-                switch (widgetType) {
-                    case 'notes':
-                        this.initNotesWidget(widget, widgetId);
-                        break;
-                    case 'welcome':
-                        this.initWelcomeWidget(widget, widgetId);
-                        break;
-                    case 'calendar':
-                        this.initCalendarWidget(widget, widgetId);
-                        break;
-                    default:
-                        console.warn(`Unknown widget type: ${widgetType}`);
-                }
-            } catch (error) {
-                console.error(`Failed to initialize ${widgetType} widget:`, error);
-                this.showWidgetError(widget, error.message);
-            }
+            this.initSingleWidget(widget, widgetType, widgetId);
         });
+    }
+
+    // Initialize a single widget
+    initSingleWidget(element, widgetType, widgetId) {
+        try {
+            switch (widgetType) {
+                case 'notes':
+                    this.initNotesWidget(element, widgetId);
+                    break;
+                case 'welcome':
+                    this.initWelcomeWidget(element, widgetId);
+                    break;
+                case 'calendar':
+                    this.initCalendarWidget(element, widgetId);
+                    break;
+                case 'clock':
+                    this.initClockWidget(element, widgetId);
+                    break;
+                case 'image':
+                    this.initImageWidget(element, widgetId);
+                    break;
+                case 'links':
+                    this.initLinksWidget(element, widgetId);
+                    break;
+                default:
+                    console.warn(`Unknown widget type: ${widgetType}`);
+            }
+        } catch (error) {
+            console.error(`Failed to initialize ${widgetType} widget:`, error);
+            this.showWidgetError(element, error.message);
+        }
     }
 
     // Initialize Notes Widget
@@ -275,6 +587,9 @@ class DashboardApp {
         this.widgets.set(id, widget);
         
         element.classList.add('notes-widget');
+        
+        // Store reference for easy access
+        this.notesWidget = widget;
     }
 
     // Initialize Welcome Widget (simple)
@@ -337,6 +652,100 @@ class DashboardApp {
         `;
         
         element.classList.add('calendar-widget');
+    }
+
+    // Initialize Clock Widget
+    initClockWidget(element, id) {
+        console.log(`Initializing Clock Widget: ${id}`);
+        
+        element.innerHTML = `
+            <div class="widget-header">
+                <h3><i class="fas fa-clock"></i> Clock</h3>
+            </div>
+            <div class="widget-content clock-content">
+                <div class="clock-display">
+                    <div class="time" id="clock-time-${id}">00:00:00</div>
+                    <div class="date" id="clock-date-${id}">Loading...</div>
+                </div>
+            </div>
+        `;
+        
+        element.classList.add('clock-widget');
+        
+        // Update clock
+        const updateClock = () => {
+            const now = new Date();
+            const timeElement = element.querySelector(`#clock-time-${id}`);
+            const dateElement = element.querySelector(`#clock-date-${id}`);
+            
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleTimeString();
+            }
+            if (dateElement) {
+                dateElement.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+        };
+        
+        updateClock();
+        setInterval(updateClock, 1000);
+    }
+
+    // Initialize Image Widget
+    initImageWidget(element, id) {
+        console.log(`Initializing Image Widget: ${id}`);
+        
+        element.innerHTML = `
+            <div class="widget-header">
+                <h3><i class="fas fa-image"></i> Image</h3>
+            </div>
+            <div class="widget-content image-content">
+                <div class="image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <h4>Image Widget</h4>
+                    <p>Upload or add image URL</p>
+                    <button class="btn btn-primary">Add Image</button>
+                </div>
+            </div>
+        `;
+        
+        element.classList.add('image-widget');
+    }
+
+    // Initialize Links Widget
+    initLinksWidget(element, id) {
+        console.log(`Initializing Links Widget: ${id}`);
+        
+        element.innerHTML = `
+            <div class="widget-header">
+                <h3><i class="fas fa-link"></i> Quick Links</h3>
+                <button class="widget-action-btn" title="Add Link">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="widget-content links-content">
+                <div class="links-list">
+                    <a href="https://github.com" class="link-item" target="_blank">
+                        <i class="fab fa-github"></i>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://stackoverflow.com" class="link-item" target="_blank">
+                        <i class="fab fa-stack-overflow"></i>
+                        <span>Stack Overflow</span>
+                    </a>
+                    <a href="https://developer.mozilla.org" class="link-item" target="_blank">
+                        <i class="fas fa-book"></i>
+                        <span>MDN Docs</span>
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        element.classList.add('links-widget');
     }
 
     // Show error in widget
@@ -416,10 +825,20 @@ class DashboardApp {
         }
 
         widgetPanel?.classList.remove('hidden');
-        gridOverlay?.classList.remove('hidden');
+        if (gridOverlay) {
+            gridOverlay.classList.remove('hidden');
+            gridOverlay.classList.add('show');
+        }
 
         // Add customize mode class to body for styling
         document.body.classList.add('customize-mode');
+
+        // Add controls to all widgets
+        document.querySelectorAll('dashboard-widget').forEach(widget => {
+            this.addWidgetControls(widget);
+        });
+
+        console.log('📋 Customize mode active - Click widgets to select/move, use controls to resize/remove');
     }
 
     exitCustomizeMode() {
@@ -436,10 +855,22 @@ class DashboardApp {
         }
 
         widgetPanel?.classList.add('hidden');
-        gridOverlay?.classList.add('hidden');
+        if (gridOverlay) {
+            gridOverlay.classList.add('hidden');
+            gridOverlay.classList.remove('show');
+        }
 
         // Remove customize mode class
         document.body.classList.remove('customize-mode');
+
+        // Remove controls from all widgets
+        document.querySelectorAll('.widget-controls').forEach(controls => {
+            controls.remove();
+        });
+
+        // Clear all states
+        this.endResize();
+        this.endDrag();
     }
 
     // Get widget by ID
@@ -457,6 +888,40 @@ class DashboardApp {
                     console.error(`Failed to refresh widget ${id}:`, error);
                 }
             }
+        }
+    }
+
+    // Save dashboard layout (for future persistence)
+    saveLayout() {
+        const layout = {};
+        document.querySelectorAll('dashboard-widget').forEach(widget => {
+            const id = widget.dataset.widgetId;
+            const position = widget.dataset.gridPosition;
+            const type = widget.dataset.widgetType;
+            
+            layout[id] = {
+                type,
+                position,
+                style: widget.style.gridArea
+            };
+        });
+        
+        console.log('💾 Dashboard layout:', layout);
+        // Here you could save to localStorage or send to backend
+        localStorage.setItem('dashboard-layout', JSON.stringify(layout));
+    }
+
+    // Load dashboard layout (for future persistence)
+    loadLayout() {
+        try {
+            const savedLayout = localStorage.getItem('dashboard-layout');
+            if (savedLayout) {
+                const layout = JSON.parse(savedLayout);
+                console.log('📂 Loading saved layout:', layout);
+                // Here you could restore widget positions
+            }
+        } catch (error) {
+            console.error('Failed to load layout:', error);
         }
     }
 }

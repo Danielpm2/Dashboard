@@ -23,9 +23,14 @@ class NotesWidget {
         this.container.innerHTML = `
             <div class="widget-header">
                 <h3><i class="fas fa-sticky-note"></i> Notes</h3>
-                <button class="widget-action-btn" id="add-note-btn" title="Add Note">
-                    <i class="fas fa-plus"></i>
-                </button>
+                <div class="widget-header-actions">
+                    <button class="widget-action-btn" id="refresh-notes-btn" title="Refresh Notes">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="widget-action-btn" id="add-note-btn" title="Add Note">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="widget-content notes-content">
@@ -98,6 +103,10 @@ class NotesWidget {
         const addBtn = this.container.querySelector('#add-note-btn');
         addBtn?.addEventListener('click', () => this.showAddForm());
 
+        // Refresh notes button
+        const refreshBtn = this.container.querySelector('#refresh-notes-btn');
+        refreshBtn?.addEventListener('click', () => this.manualRefresh());
+
         // Save note button
         const saveBtn = this.container.querySelector('#save-note-btn');
         saveBtn?.addEventListener('click', () => this.saveNote());
@@ -159,61 +168,122 @@ class NotesWidget {
     }
 
     async saveNote() {
+        const noteText = this.container.querySelector('#note-text');
+        const selectedColor = this.container.querySelector('input[name="note-color"]:checked');
+        const saveBtn = this.container.querySelector('#save-note-btn');
+        
+        if (!noteText?.value.trim()) {
+            this.showError('Please enter a note');
+            return;
+        }
+
+        if (!saveBtn) {
+            console.error('Save button not found');
+            return;
+        }
+
+        const noteData = {
+            note: noteText.value.trim(),
+            color: parseInt(selectedColor?.value || '1'),
+            user: this.currentUser
+        };
+
+        // Store original button state
+        const originalHTML = saveBtn.innerHTML;
+        const originalDisabled = saveBtn.disabled;
+
+        // Show saving state
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        saveBtn.disabled = true;
+
         try {
-            const noteText = this.container.querySelector('#note-text');
-            const selectedColor = this.container.querySelector('input[name="note-color"]:checked');
-
-            if (!noteText?.value.trim()) {
-                this.showError('Please enter a note');
-                return;
-            }
-
-            const noteData = {
-                note: noteText.value.trim(),
-                color: parseInt(selectedColor?.value || '1'),
-                user: this.currentUser
-            };
-
-            // Show saving state
-            const saveBtn = this.container.querySelector('#save-note-btn');
-            const originalContent = saveBtn?.innerHTML;
-            if (saveBtn) {
-                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-                saveBtn.disabled = true;
-            }
-
-            await this.notesAPI.createNote(noteData);
+            const result = await this.notesAPI.createNote(noteData);
             
-            this.hideAddForm();
-            await this.loadNotes();
+            // Success path - reset button and hide form
+            saveBtn.innerHTML = originalHTML;
+            saveBtn.disabled = originalDisabled;
+            
             this.showSuccess('Note saved successfully!');
+            this.hideAddForm();
+            
+            // Refresh notes after save
+            try {
+                await this.loadNotes();
+            } catch (refreshError) {
+                console.error('Failed to refresh after save:', refreshError);
+                // Don't show error to user - save was successful
+            }
 
         } catch (error) {
+            console.error('Failed to save note:', error);
+            
+            // Error path - reset button but keep form open
+            saveBtn.innerHTML = originalHTML;
+            saveBtn.disabled = originalDisabled;
+            
             this.showError(`Failed to save note: ${error.message}`);
-        } finally {
-            // Reset save button
-            const saveBtn = this.container.querySelector('#save-note-btn');
-            if (saveBtn) {
-                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save';
-                saveBtn.disabled = false;
-            }
         }
     }
 
     async loadNotes() {
+        const notesList = this.container.querySelector('#notes-list');
+        
         try {
-            const notesList = this.container.querySelector('#notes-list');
             if (notesList) {
                 notesList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading notes...</div>';
             }
 
-            this.notes = await this.notesAPI.getAllNotes();
+            // Add timeout to prevent infinite loading
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
+            });
+            
+            this.notes = await Promise.race([
+                this.notesAPI.getAllNotes(),
+                timeoutPromise
+            ]);
+            
             this.renderNotes();
 
         } catch (error) {
             console.error('Failed to load notes:', error);
-            this.showError('Failed to load notes');
-            this.renderEmptyState();
+            
+            // Show error in the notes list area
+            if (notesList) {
+                this.renderErrorState(error.message);
+            }
+            
+            // Don't show notification error for background refreshes
+            // Only show if this is the initial load or manual refresh
+            if (!this.notes || this.notes.length === 0) {
+                this.showError(`Failed to load notes: ${error.message}`);
+            }
+        }
+    }
+
+    // Manual refresh method with visual feedback
+    async manualRefresh() {
+        const refreshBtn = this.container.querySelector('#refresh-notes-btn');
+        const originalContent = refreshBtn?.innerHTML;
+        
+        try {
+            // Show spinning icon
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                refreshBtn.disabled = true;
+            }
+            
+            await this.loadNotes();
+            this.showSuccess('Notes refreshed!');
+        } catch (error) {
+            console.error('Manual refresh failed:', error);
+            this.showError('Failed to refresh notes');
+        } finally {
+            // Restore button
+            if (refreshBtn) {
+                refreshBtn.innerHTML = originalContent || '<i class="fas fa-sync-alt"></i>';
+                refreshBtn.disabled = false;
+            }
         }
     }
 
@@ -275,17 +345,63 @@ class NotesWidget {
         }
     }
 
+    renderErrorState(errorMessage) {
+        const notesList = this.container.querySelector('#notes-list');
+        if (notesList) {
+            notesList.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Failed to load notes</p>
+                    <small>${errorMessage}</small>
+                    <button class="btn btn-primary" onclick="this.closest('.notes-widget').querySelector('#refresh-notes-btn').click()">
+                        <i class="fas fa-sync-alt"></i> Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
+
     async deleteNote(noteId) {
         if (!confirm('Are you sure you want to delete this note?')) {
             return;
         }
 
+        const noteElement = this.container.querySelector(`[data-note-id="${noteId}"]`);
+        const originalOpacity = noteElement?.style.opacity || '1';
+        const originalPointerEvents = noteElement?.style.pointerEvents || 'auto';
+
         try {
+            // Show loading state for the specific note
+            if (noteElement) {
+                noteElement.style.opacity = '0.5';
+                noteElement.style.pointerEvents = 'none';
+            }
+
             await this.notesAPI.deleteNote(noteId);
-            await this.loadNotes();
+            
+            // Show success message immediately
             this.showSuccess('Note deleted successfully!');
+            
+            // Refresh notes after delete
+            try {
+                await this.loadNotes();
+            } catch (refreshError) {
+                console.error('Failed to refresh after delete:', refreshError);
+                // If refresh fails, just remove the note element manually
+                if (noteElement) {
+                    noteElement.remove();
+                }
+            }
+
         } catch (error) {
+            console.error('Failed to delete note:', error);
             this.showError(`Failed to delete note: ${error.message}`);
+            
+            // Always restore note element if deletion failed
+            if (noteElement) {
+                noteElement.style.opacity = originalOpacity;
+                noteElement.style.pointerEvents = originalPointerEvents;
+            }
         }
     }
 
@@ -344,6 +460,11 @@ class NotesWidget {
         setTimeout(() => {
             notification.remove();
         }, 3000);
+    }
+
+    // Public method to refresh notes (can be called from other components)
+    async refresh() {
+        await this.loadNotes();
     }
 }
 

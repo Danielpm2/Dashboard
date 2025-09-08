@@ -21,6 +21,11 @@
     margin: 0 auto;
 }
 
+/* Main dashboard container needs relative positioning for overlay */
+.dashboard-main {
+    position: relative;
+}
+
 /* Widget Base Styles */
 .widget-item {
     background: var(--widget-background);
@@ -33,11 +38,14 @@
     flex-direction: column;
     position: relative;
     min-height: 200px;
+    z-index: 50;
+    pointer-events: all;
 }
 
 .widget-item:hover {
     box-shadow: var(--shadow-widget-hover);
     transform: translateY(-2px);
+    z-index: 60;
 }
 
 /* Customize Mode Styles */
@@ -63,39 +71,62 @@
     opacity: 0.7;
 }
 
-/* Grid Position Helper */
-.widget-item[data-grid-position] {
-    grid-area: var(--grid-area, auto);
-}
-
-/* Apply grid position from data attribute */
-.widget-item {
-    grid-area: var(--grid-area, auto);
-}
-
 /* Grid Overlay for Visual Positioning */
 .grid-overlay {
     position: absolute;
     top: var(--grid-gap);
-    left: var(--grid-gap);
-    right: var(--grid-gap);
-    bottom: var(--grid-gap);
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 2 * var(--grid-gap));
+    max-width: calc(1400px - 2 * var(--grid-gap));
     display: grid;
     grid-template-columns: repeat(var(--grid-columns), 1fr);
     grid-template-rows: repeat(var(--grid-rows), var(--grid-cell-size));
     gap: var(--grid-gap);
     pointer-events: none;
-    z-index: 1000;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-base);
+}
+
+.grid-overlay.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 .grid-overlay::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.1);
+    top: -var(--grid-gap);
+    left: -var(--grid-gap);
+    right: -var(--grid-gap);
+    bottom: -var(--grid-gap);
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(1px);
+    pointer-events: none;
+}
+
+.grid-overlay .grid-cell {
+    background: rgba(var(--color-primary-rgb), 0.08);
+    border: 1px dashed rgba(var(--color-primary-rgb), 0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    pointer-events: all;
+    z-index: 20;
+}
+
+.grid-overlay .grid-cell:hover {
+    background: rgba(var(--color-primary-rgb), 0.15);
+    border-color: var(--color-primary);
+    transform: scale(1.02);
 }
 
 .grid-overlay .grid-cell {
@@ -146,6 +177,123 @@
 .widget-item {
     min-width: var(--grid-cell-size);
     min-height: var(--grid-cell-size);
+}
+
+/* Drag and Drop Styles */
+.widget-item.dragging {
+    opacity: 0.8;
+    transform: rotate(2deg) scale(1.02);
+    z-index: 1000;
+    cursor: grabbing !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.widget-item.resizing {
+    z-index: 1000;
+    box-shadow: 0 0 0 2px var(--color-secondary);
+}
+
+/* Resize Handles */
+.resize-handle {
+    position: absolute;
+    background: var(--color-secondary);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.customize-mode .widget-item:hover .resize-handle,
+.widget-item.resizing .resize-handle {
+    opacity: 1;
+}
+
+.resize-handle-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: se-resize;
+}
+
+.resize-handle-s {
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: s-resize;
+}
+
+.resize-handle-e {
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: e-resize;
+}
+
+/* Drop Zone Highlighting */
+.grid-overlay .grid-cell.drop-zone {
+    background: rgba(var(--color-success-rgb), 0.3);
+    border-color: var(--color-success);
+    border-style: solid;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+/* Widget Controls Enhancement */
+.widget-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 100;
+}
+
+.customize-mode .widget-item:hover .widget-controls {
+    opacity: 1;
+}
+
+.widget-control-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.widget-control-btn:hover {
+    background: white;
+    color: var(--color-danger);
+    transform: scale(1.1);
+}
+
+/* Drag Cursor */
+.customize-mode .widget-item:not(.dragging):not(.resizing) {
+    cursor: grab;
+}
+
+.customize-mode .widget-item:not(.dragging):not(.resizing):active {
+    cursor: grabbing;
 }
 
 /* Utility Classes for Grid Positioning */

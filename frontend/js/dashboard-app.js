@@ -592,6 +592,9 @@ class DashboardApp {
                 case 'calendar':
                     this.initCalendarWidget(element, widgetId);
                     break;
+                case 'events':
+                    this.initEventsWidget(element, widgetId);
+                    break;
                 case 'clock':
                     this.initClockWidget(element, widgetId);
                     break;
@@ -670,25 +673,24 @@ class DashboardApp {
         }, 1000);
     }
 
-    // Initialize Calendar Widget (placeholder)
+    // Initialize Calendar Widget
     initCalendarWidget(element, id) {
         console.log(`Initializing Calendar Widget: ${id}`);
         
-        element.innerHTML = `
-            <div class="widget-header">
-                <h3><i class="fas fa-calendar"></i> Calendar</h3>
-            </div>
-            <div class="widget-content calendar-content">
-                <div class="calendar-placeholder">
-                    <i class="fas fa-calendar-alt"></i>
-                    <h4>Calendar Integration</h4>
-                    <p>Calendar functionality will be available soon.</p>
-                    <small>Connect your Google Calendar for events and scheduling.</small>
-                </div>
-            </div>
-        `;
+        const widget = new CalendarWidget(element);
+        this.widgets.set(id, widget);
         
         element.classList.add('calendar-widget');
+    }
+
+    // Initialize Events Widget
+    initEventsWidget(element, id) {
+        console.log(`Initializing Events Widget: ${id}`);
+        
+        const widget = new EventsWidget(element);
+        this.widgets.set(id, widget);
+        
+        element.classList.add('events-widget');
     }
 
     // Initialize Clock Widget

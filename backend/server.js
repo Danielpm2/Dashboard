@@ -1,43 +1,26 @@
 const express = require('express');
-
-// Import configuration
-const config = require('./api/config');
-
-// Import routes
-const apiRoutes = require('./routes/index');
+require('dotenv').config();
+const {getNotes} = require('./api/notes.js')
 
 const app = express();
-const PORT = config.server.port;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(requestLogger);
-app.use(cors);
-app.use(jsonParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// API Routes
-app.use('/api', apiRoutes);
-
-// Root endpoint
 app.get('/', (req, res) => {
     res.json({
         message: 'Dashboard API Server',
-        version: config.api.version,
-        environment: config.server.env,
-        endpoints: {
-            api: `${config.api.prefix}`,
-            health: `${config.api.prefix}/health`,
-            panels: `${config.api.prefix}/panels`
-        }
+        version: '1.0.0',
+        timestamp: new Date().toISOString()
     });
 });
 
-// Error handling middleware (must be last)
-app.use(errorHandler);
+// Notes API routes
+app.get('/api/notes', getNotes);
 
-// Start server
-app.listen(PORT, async () => {
-    console.log(`🚀 Dashboard API server running at http://localhost:${PORT}`);
-    console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
-
-module.exports = app;
